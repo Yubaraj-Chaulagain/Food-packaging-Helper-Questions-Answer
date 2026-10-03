@@ -232,13 +232,15 @@ public class MainActivity extends Activity {
         String safeError =
             JSONObject.quote(error);
 
-        String script =
-            "if(window.onNativeVoiceResult){" +
-            "window.onNativeVoiceResult(" +
-            currentMode + "," +
-            safeTranscript + "," +
-            safeError +
-            ");}";
+        String safeMode = JSONObject.quote(currentMode);
+
+String script =
+    "if(window.onNativeVoiceResult){" +
+    "window.onNativeVoiceResult(" +
+    safeMode + "," +
+    safeTranscript + "," +
+    safeError +
+    ");}";
 
         runOnUiThread(() ->
             webView.evaluateJavascript(script, null)
