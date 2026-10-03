@@ -61,8 +61,17 @@ jobs:
       - name: Verify Android SDK
         shell: bash
         run: |
-          adb version
+          echo "$ANDROID_HOME/platform-tools" >> "$GITHUB_PATH"
+
+          export PATH="$ANDROID_HOME/platform-tools:$PATH"
+
+          echo "Checking ADB..."
+          "$ANDROID_HOME/platform-tools/adb" version
+
+          echo "Checking Android platforms..."
           ls "$ANDROID_HOME/platforms"
+
+          echo "Checking Android build tools..."
           ls "$ANDROID_HOME/build-tools"
 
       - name: Set up Gradle
