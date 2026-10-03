@@ -1,4 +1,3 @@
-
 package com.interview.offline;
 
 import android.Manifest;
@@ -49,14 +48,24 @@ public class MainActivity extends Activity {
 
         webView.setWebViewClient(new WebViewClient());
 
+        // HTML बाट Android microphone call गर्न
         webView.addJavascriptInterface(
-            new AndroidVoiceBridge(),
-            "AndroidVoice"
+                new AndroidVoiceBridge(),
+                "AndroidVoice"
         );
 
         webView.loadUrl("file:///android_asset/index.html");
     }
 
+    /**
+     * JavaScript → Android microphone bridge
+     *
+     * HTML बाट:
+     * AndroidVoice.startVoiceSearch("search")
+     * वा
+     * AndroidVoice.startVoiceSearch("answer")
+     * call हुन्छ।
+     */
     private class AndroidVoiceBridge {
 
         @JavascriptInterface
@@ -64,19 +73,23 @@ public class MainActivity extends Activity {
 
             runOnUiThread(() -> {
 
-                currentMode = mode;
+                if (mode == null || mode.trim().isEmpty()) {
+                    currentMode = "search";
+                } else {
+                    currentMode = mode;
+                }
 
                 if (ContextCompat.checkSelfPermission(
-                    MainActivity.this,
-                    Manifest.permission.RECORD_AUDIO
+                        MainActivity.this,
+                        Manifest.permission.RECORD_AUDIO
                 ) != PackageManager.PERMISSION_GRANTED) {
 
                     ActivityCompat.requestPermissions(
-                        MainActivity.this,
-                        new String[]{
-                            Manifest.permission.RECORD_AUDIO
-                        },
-                        REQUEST_MICROPHONE
+                            MainActivity.this,
+                            new String[]{
+                                    Manifest.permission.RECORD_AUDIO
+                            },
+                            REQUEST_MICROPHONE
                     );
 
                 } else {
@@ -86,103 +99,121 @@ public class MainActivity extends Activity {
         }
     }
 
+    /**
+     * Android speech recognition खोल्ने
+     */
     private void startSpeechRecognition() {
 
         try {
 
             Intent intent = new Intent(
-                RecognizerIntent.ACTION_RECOGNIZE_SPEECH
+                    RecognizerIntent.ACTION_RECOGNIZE_SPEECH
             );
 
             intent.putExtra(
-                RecognizerIntent.EXTRA_LANGUAGE_MODEL,
-                RecognizerIntent.LANGUAGE_MODEL_FREE_FORM
+                    RecognizerIntent.EXTRA_LANGUAGE_MODEL,
+                    RecognizerIntent.LANGUAGE_MODEL_FREE_FORM
             );
 
             intent.putExtra(
-                RecognizerIntent.EXTRA_LANGUAGE,
-                Locale.US.toLanguageTag()
+                    RecognizerIntent.EXTRA_LANGUAGE,
+                    Locale.US.toLanguageTag()
             );
 
             intent.putExtra(
-                RecognizerIntent.EXTRA_PROMPT,
-                "Speak now"
+                    RecognizerIntent.EXTRA_LANGUAGE_PREFERENCE,
+                    Locale.US.toLanguageTag()
             );
 
             intent.putExtra(
-                RecognizerIntent.EXTRA_MAX_RESULTS,
-                1
+                    RecognizerIntent.EXTRA_PROMPT,
+                    currentMode.equals("answer")
+                            ? "Speak your answer"
+                            : "Speak your search"
+            );
+
+            intent.putExtra(
+                    RecognizerIntent.EXTRA_MAX_RESULTS,
+                    1
             );
 
             if (intent.resolveActivity(getPackageManager()) == null) {
+
                 sendVoiceResult(
-                    "",
-                    "Speech recognition service is not available."
+                        "",
+                        "Speech recognition service is not available on this device."
                 );
+
                 return;
             }
 
             startActivityForResult(
-                intent,
-                REQUEST_SPEECH
+                    intent,
+                    REQUEST_SPEECH
             );
 
         } catch (Exception e) {
 
             sendVoiceResult(
-                "",
-                "Unable to start voice recognition."
+                    "",
+                    "Unable to start voice recognition."
             );
         }
     }
 
+    /**
+     * Microphone permission result
+     */
     @Override
     public void onRequestPermissionsResult(
-        int requestCode,
-        String[] permissions,
-        int[] grantResults
+            int requestCode,
+            String[] permissions,
+            int[] grantResults
     ) {
 
         super.onRequestPermissionsResult(
-            requestCode,
-            permissions,
-            grantResults
+                requestCode,
+                permissions,
+                grantResults
         );
 
         if (requestCode == REQUEST_MICROPHONE) {
 
             if (grantResults.length > 0 &&
-                grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                    grantResults[0] == PackageManager.PERMISSION_GRANTED) {
 
                 startSpeechRecognition();
 
             } else {
 
                 sendVoiceResult(
-                    "",
-                    "Microphone permission denied."
+                        "",
+                        "Microphone permission denied."
                 );
 
                 Toast.makeText(
-                    this,
-                    "Please allow microphone permission.",
-                    Toast.LENGTH_LONG
+                        this,
+                        "Please allow microphone permission.",
+                        Toast.LENGTH_LONG
                 ).show();
             }
         }
     }
 
+    /**
+     * Speech recognition result
+     */
     @Override
     protected void onActivityResult(
-        int requestCode,
-        int resultCode,
-        Intent data
+            int requestCode,
+            int resultCode,
+            Intent data
     ) {
 
         super.onActivityResult(
-            requestCode,
-            resultCode,
-            data
+                requestCode,
+                resultCode,
+                data
         );
 
         if (requestCode == REQUEST_SPEECH) {
@@ -190,77 +221,109 @@ public class MainActivity extends Activity {
             if (resultCode == RESULT_OK && data != null) {
 
                 ArrayList<String> results =
-                    data.getStringArrayListExtra(
-                        RecognizerIntent.EXTRA_RESULTS
-                    );
+                        data.getStringArrayListExtra(
+                                RecognizerIntent.EXTRA_RESULTS
+                        );
 
                 if (results != null && !results.isEmpty()) {
 
+                    String transcript = results.get(0);
+
                     sendVoiceResult(
-                        results.get(0),
-                        ""
+                            transcript,
+                            ""
                     );
 
                 } else {
 
                     sendVoiceResult(
-                        "",
-                        "No speech detected."
+                            "",
+                            "No speech detected."
                     );
                 }
 
             } else {
 
                 sendVoiceResult(
-                    "",
-                    "Voice input cancelled or unavailable."
+                        "",
+                        "Voice input cancelled or unavailable."
                 );
             }
         }
     }
 
+    /**
+     * Android बाट HTML मा voice result पठाउने
+     */
     private void sendVoiceResult(
-        String transcript,
-        String error
+            String transcript,
+            String error
     ) {
 
-        if (webView == null) return;
+        if (webView == null) {
+            return;
+        }
 
         String safeTranscript =
-            JSONObject.quote(transcript);
+                JSONObject.quote(
+                        transcript == null ? "" : transcript
+                );
 
         String safeError =
-            JSONObject.quote(error);
+                JSONObject.quote(
+                        error == null ? "" : error
+                );
 
-        String safeMode = JSONObject.quote(currentMode);
+        String safeMode =
+                JSONObject.quote(
+                        currentMode == null ? "search" : currentMode
+                );
 
-String script =
-    "if(window.onNativeVoiceResult){" +
-    "window.onNativeVoiceResult(" +
-    safeMode + "," +
-    safeTranscript + "," +
-    safeError +
-    ");}";
+        String script =
+                "if(typeof window.onNativeVoiceResult === 'function'){" +
+                        "window.onNativeVoiceResult(" +
+                        safeMode + "," +
+                        safeTranscript + "," +
+                        safeError +
+                        ");" +
+                        "}";
 
         runOnUiThread(() ->
-            webView.evaluateJavascript(script, null)
+                webView.evaluateJavascript(
+                        script,
+                        null
+                )
         );
     }
 
+    /**
+     * Android Back button
+     */
     @Override
     public void onBackPressed() {
 
         if (webView != null && webView.canGoBack()) {
+
             webView.goBack();
+
         } else {
+
             super.onBackPressed();
         }
     }
 
+    /**
+     * WebView cleanup
+     */
     @Override
     protected void onDestroy() {
 
         if (webView != null) {
+
+            webView.removeJavascriptInterface(
+                    "AndroidVoice"
+            );
+
             webView.destroy();
             webView = null;
         }
