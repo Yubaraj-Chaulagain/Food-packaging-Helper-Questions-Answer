@@ -23,22 +23,25 @@ jobs:
 
       - name: Set up Android SDK
         uses: android-actions/setup-android@v3
+        with:
+          packages: |
+            platform-tools
+            platforms;android-35
+            build-tools;35.0.0
 
       - name: Make Gradle executable
-        run: chmod +x gradlew
+        run: chmod +x ./gradlew
 
       - name: Build Debug APK
-        run: ./gradlew assembleDebug --stacktrace
+        run: ./gradlew assembleDebug
 
       - name: Rename APK
         run: |
           mkdir -p output
-          cp app/build/outputs/apk/debug/app-debug.apk \
-             output/Interview-Helper-Offline.apk
+          cp app/build/outputs/apk/debug/app-debug.apk output/Interview.apk
 
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
-          name: Interview-Offline-APK
-          path: output/Interview-Helper-Offline.apk
-          retention-days: 30
+          name: Interview-APK
+          path: output/Interview.apk
