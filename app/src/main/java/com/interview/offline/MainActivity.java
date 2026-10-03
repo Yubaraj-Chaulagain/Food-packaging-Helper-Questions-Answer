@@ -1,3 +1,4 @@
+
 package com.interview.offline;
 
 import android.app.Activity;
@@ -7,13 +8,60 @@ import android.webkit.WebView;
 import android.webkit.WebViewClient;
 import android.webkit.WebChromeClient;
 import android.webkit.PermissionRequest;
-import android.webkit.WebResourceRequest;
 
 public class MainActivity extends Activity {
-  WebView web;
-  @Override public void onCreate(Bundle b){ super.onCreate(b); web=new WebView(this); setContentView(web);
-    WebSettings s=web.getSettings(); s.setJavaScriptEnabled(true); s.setDomStorageEnabled(true); s.setAllowFileAccess(true); s.setAllowContentAccess(true); s.setMediaPlaybackRequiresUserGesture(false); s.setBuiltInZoomControls(false); s.setDisplayZoomControls(false);
-    web.setWebViewClient(new WebViewClient()); web.setWebChromeClient(new WebChromeClient(){ @Override public void onPermissionRequest(PermissionRequest r){ r.grant(r.getResources()); }});
-    web.loadUrl("file:///android_asset/index.html"); }
-  @Override public void onBackPressed(){ if(web.canGoBack()) web.goBack(); else super.onBackPressed(); }
+
+    private WebView webView;
+
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+
+        webView = new WebView(this);
+        setContentView(webView);
+
+        WebSettings settings = webView.getSettings();
+
+        settings.setJavaScriptEnabled(true);
+        settings.setDomStorageEnabled(true);
+        settings.setAllowFileAccess(true);
+        settings.setAllowContentAccess(true);
+        settings.setMediaPlaybackRequiresUserGesture(false);
+        settings.setBuiltInZoomControls(false);
+        settings.setDisplayZoomControls(false);
+
+        webView.setWebViewClient(new WebViewClient());
+
+        webView.setWebChromeClient(new WebChromeClient() {
+            @Override
+            public void onPermissionRequest(
+                PermissionRequest request
+            ) {
+                runOnUiThread(() -> {
+                    request.grant(request.getResources());
+                });
+            }
+        });
+
+        webView.loadUrl("file:///android_asset/index.html");
+    }
+
+    @Override
+    public void onBackPressed() {
+        if (webView != null && webView.canGoBack()) {
+            webView.goBack();
+        } else {
+            super.onBackPressed();
+        }
+    }
+
+    @Override
+    protected void onDestroy() {
+        if (webView != null) {
+            webView.destroy();
+            webView = null;
+        }
+
+        super.onDestroy();
+    }
 }
