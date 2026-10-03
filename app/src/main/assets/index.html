@@ -1,1 +1,173 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
 
+<meta name="viewport"
+      content="width=device-width,
+      initial-scale=1.0,
+      maximum-scale=1.0,
+      user-scalable=no">
+
+<title>Food Packaging Helper Interview</title>
+
+<style>
+/* तपाईंको original CSS यहाँ छ */
+</style>
+</head>
+
+<body>
+
+<div class="container">
+
+  <h2>Food Packaging Helper Interview</h2>
+
+  <div class="tabs">
+    <button id="tabQ"
+            class="activeTab"
+            onclick="show('q')">
+      📋 Questions & Answers
+    </button>
+
+    <button id="tabZ"
+            onclick="show('z')">
+      🎯 Interview Quiz
+    </button>
+  </div>
+
+  <div id="questionsPanel" class="panel show">
+
+    <div>
+      🟢 🔊 Listen Answer is built into this file
+      and works without internet.
+    </div>
+
+    <div class="search">
+      <input id="s"
+             placeholder="Type or speak to search..."
+             onkeyup="filterQ()">
+
+      <button onclick="voiceSearch()">🎤</button>
+    </div>
+
+    <div class="tableWrap">
+      <table>
+        <thead>
+          <tr>
+            <th>No</th>
+            <th>Question</th>
+            <th>Sample Answer</th>
+          </tr>
+        </thead>
+
+        <tbody id="rows"></tbody>
+      </table>
+    </div>
+
+  </div>
+
+  <div id="quizPanel" class="panel">
+
+    <div id="quizArea">
+
+      <div class="top">
+        <div class="badge" id="counter"></div>
+        <div class="timer" id="timerEl">01:00</div>
+      </div>
+
+      <div class="progress">
+        <div id="progress"></div>
+      </div>
+
+      <div class="question" id="question"></div>
+
+      <button id="askQuestionBtn"
+              class="gray"
+              onclick="playQuestion()">
+        🔊 Ask Question Again
+      </button>
+
+      <textarea id="answer"
+                class="answer"
+                placeholder="Type your answer here...">
+      </textarea>
+
+      <div class="buttons">
+
+        <button class="btn gray"
+                onclick="voiceAnswer()">
+          🎤 Speak Answer
+        </button>
+
+        <button class="btn primary"
+                id="submit"
+                onclick="check()">
+          Submit Answer
+        </button>
+
+        <button class="btn dark"
+                id="next"
+                onclick="nextQ()"
+                disabled>
+          Next Question ➜
+        </button>
+
+      </div>
+
+      <div id="result"
+           class="result">
+      </div>
+
+    </div>
+
+    <div id="scoreArea"
+         class="score hidden">
+
+      <div class="signal">🏁</div>
+
+      <h3>Quiz Completed</h3>
+
+      <p id="scoreText"></p>
+
+      <button class="btn primary"
+              onclick="restart()">
+        🔄 Restart Quiz
+      </button>
+
+    </div>
+
+  </div>
+
+</div>
+
+<script>
+
+const questions = [
+  {
+    no: "1",
+    q: "Tell me about yourself",
+    a: "I am hardworking, follow hygiene rules, and ready for packaging work in shifts."
+  },
+  {
+    no: "2",
+    q: "Why do you want this job?",
+    a: "I want stable work and I am interested in factory packaging work."
+  },
+  {
+    no: "3",
+    q: "Why Luxembourg?",
+    a: "It is good for work opportunities and career growth."
+  },
+  {
+    no: "4",
+    q: "What is food packaging?",
+    a: "It is the process of packing food safely for storage and transport."
+  },
+  {
+    no: "5",
+    q: "What experience do you have?",
+    a: "I have basic factory/packing experience and I learn quickly."
+  },
+  {
+    no: "6",
+   
