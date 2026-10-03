@@ -15,6 +15,10 @@ jobs:
     name: Build APK
     runs-on: ubuntu-latest
 
+    env:
+      ANDROID_HOME: /usr/local/lib/android/sdk
+      ANDROID_SDK_ROOT: /usr/local/lib/android/sdk
+
     steps:
       - name: Checkout source code
         uses: actions/checkout@v4
@@ -25,15 +29,41 @@ jobs:
           distribution: temurin
           java-version: '17'
 
-      - name: Set up Android SDK
-        uses: android-actions/setup-android@v3
+      - name: Locate Android SDK Manager
+        shell: bash
+        run: |
+          echo "Searching Android SDK Manager..."
+
+          SDKMANAGER=$(find "$ANDROID_HOME/cmdline-tools" \
+            -type f -name sdkmanager | head -n 1)
+
+          if [ -z "$SDKMANAGER" ]; then
+            echo "ERROR: sdkmanager not found"
+            exit 1
+          fi
+
+          echo "SDK Manager found: $SDKMANAGER"
+          echo "SDKMANAGER=$SDKMANAGER" >> "$GITHUB_ENV"
 
       - name: Accept Android SDK Licenses
-        run: yes | sdkmanager --licenses || true
+        shell: bash
+        run: |
+          yes | "$SDKMANAGER" --licenses || true
 
       - name: Install Android SDK Packages
+        shell: bash
         run: |
-          sdkmanager --install "platform-tools" "platforms;android-35" "build-tools;35.0.0"
+          "$SDKMANAGER" --install \
+            "platform-tools" \
+            "platforms;android-35" \
+            "build-tools;35.0.0"
+
+      - name: Verify Android SDK
+        shell: bash
+        run: |
+          adb version
+          ls "$ANDROID_HOME/platforms"
+          ls "$ANDROID_HOME/build-tools"
 
       - name: Set up Gradle
         uses: gradle/actions/setup-gradle@v4
@@ -49,14 +79,22 @@ jobs:
         run: gradle assembleDebug --stacktrace
 
       - name: Verify APK
+        shell: bash
         run: |
-          ls -lh app/build/outputs/apk/debug/
-          test -f app/build/outputs/apk/debug/app-debug.apk
+          APK="app/build/outputs/apk/debug/app-debug.apk"
+
+          if [ ! -f "$APK" ]; then
+            echo "ERROR: APK file not found"
+            exit 1
+          fi
+
+          ls -lh "$APK"
 
       - name: Rename APK
         run: |
           mkdir -p output
-          cp app/build/outputs/apk/debug/app-debug.apk output/Food-Packaging-Interview.apk
+          cp app/build/outputs/apk/debug/app-debug.apk \
+            output/Food-Packaging-Interview.apk
 
       - name: Upload APK
         uses: actions/upload-artifact@v4
